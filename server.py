@@ -30,20 +30,32 @@ def handleMessages(client):
         try:
             # limite que esta funcion leera, 1024bytes
             message = client.recv(1024)
-            broadcast(message, client)
-        except:
-            index = clients.index(client)
-            username = usernames[index]
-            # utf-8 para la codificacion
-            broadcast(f"CHAT: {username} se ha desconectado.".encode('utf-8'), client)
 
-            # Elimino al cliente
-            clients.remove(client)
-            usernames.remove(username)
-            client.close()
+            # verifico si el cliente desea salir del chat
+            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
+
+            if len(decoMessage) > 1:
+                if decoMessage[1] == "salir":
+                    disconnectClient(client)
+                    break
+                else:
+                    broadcast(message, client)
+        except:
+            disconnectClient(client)
             break
 
+def disconnectClient(client):
+    index = clients.index(client)
+    username = usernames[index]
 
+    message = f"CHAT: {username} se ha desconectado."
+    broadcast(message.encode('utf-8'), client)
+    print(message)
+
+    # Elimino al cliente
+    clients.remove(client)
+    usernames.remove(username)
+    client.close()
 
 def receiveConnections():
     while True:

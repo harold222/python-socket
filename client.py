@@ -20,10 +20,8 @@ def receiveMessages():
             else:
                 print(message)
         except:
-            print("An error Ocurred")
             client.close()
             break
-
 
 def writeMessages():
     while True:

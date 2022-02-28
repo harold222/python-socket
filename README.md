@@ -1,0 +1,1 @@
+install = pip3 install pyshine==0.0.6

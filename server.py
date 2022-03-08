@@ -31,13 +31,6 @@ def define_server():
     return server
 
 
-# send messages to al clients
-def broadcast(message, _client):
-    for client in clients:
-        if client != _client:
-            client.send(message)
-
-
 def generate_list_of_clients():
     arr = []
     for index, user in enumerate(usernames):
@@ -51,26 +44,26 @@ def generate_list_of_clients():
     }, sort_keys=False, indent=2).encode("utf8")
 
 
-def handleMessages(client):
-    while True:
-        try:
-            # max 1024bytes
-            message = client.recv(1024)
-
-            # verify if the client want to leave of the chat
-            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
-
-            if len(decoMessage) > 1:
-                # message to leave of the chat
-                if decoMessage[1] == "salir":
-                    disconnect_client(client)
-                    break
-                else:
-                    # publish messages
-                    broadcast(message, client)
-        except:
-            disconnect_client(client)
-            break
+# def handleMessages(client):
+#     while True:
+#         try:
+#             # max 1024bytes
+#             message = client.recv(1024)
+#
+#             # verify if the client want to leave of the chat
+#             decoMessage = message.decode('utf-8').replace(" ", "").split(":")
+#
+#             if len(decoMessage) > 1:
+#                 # message to leave of the chat
+#                 if decoMessage[1] == "salir":
+#                     disconnect_client(client)
+#                     break
+#                 else:
+#                     # publish messages
+#                     broadcast(message, client)
+#         except:
+#             disconnect_client(client)
+#             break
 
 
 def disconnect_client(client):
@@ -89,7 +82,7 @@ def disconnect_client(client):
     # broadcast(generateListOfClients())
 
 
-def test(client):
+def detect_errors(client):
     while True:
         try:
             pass
@@ -118,11 +111,11 @@ def receive_connections(server):
         client.sendall(generate_list_of_clients())
 
         # for each client a thread is assigned
-        thread = threading.Thread(target=handleMessages, args=(client,))
-        thread.start()
-
-        # thread = threading.Thread(target=test, args=(client,))
+        # thread = threading.Thread(target=handleMessages, args=(client,))
         # thread.start()
+
+        thread = threading.Thread(target=detect_errors, args=(client,))
+        thread.start()
 
 
 receive_connections(define_server())

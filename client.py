@@ -90,7 +90,9 @@ def generate_connections(host, port):
     return client
 
 
-def bind_other_clients(ip, lastClient, username):
+def bind_other_clients(ip, user_client):
+    a = user_client
+
     new_client = generate_connections(ip, 43434)
 
     thread_per_client = threading.Thread(target=receive_messages_client, args=[new_client])
@@ -144,7 +146,11 @@ def receive_messages_server(client):
                         obj_client = []
                         for data in clients:
                             # create thread for clients
-                            obj_client.append(bind_other_clients(data['ip'], data['username']))
+                            ip_client = data['ip']
+                            user_client = data['username']
+
+                            bind_client = bind_other_clients(ip_client, user_client)
+                            obj_client.append(bind_client)
 
                         write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
                         write_thread.start()

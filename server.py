@@ -31,13 +31,17 @@ def define_server():
     return server
 
 
-def generate_list_of_clients():
+def generate_list_of_clients(client):
     arr = []
+    index = clients.index(client)
+    current_user = usernames[index]
+
     for index, user in enumerate(usernames):
-        arr.append({
-            "username": user,
-            "ip": addresses[index][0]
-        })
+        if user != current_user:
+            arr.append({
+                "username": user,
+                "ip": addresses[index][0]
+            })
 
     return json.dumps({
         "allclients": arr
@@ -108,7 +112,7 @@ def receive_connections(server):
         addresses.append(address)
 
         # send list of clients
-        client.sendall(generate_list_of_clients())
+        client.sendall(generate_list_of_clients(client))
 
         # for each client a thread is assigned
         # thread = threading.Thread(target=handleMessages, args=(client,))

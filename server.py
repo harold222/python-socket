@@ -43,8 +43,7 @@ def generate_list_of_clients():
     for index, user in enumerate(usernames):
         arr.append({
             "username": user,
-            "ip": addresses[index][0],
-            "port": addresses[index][1]
+            "ip": addresses[index][0]
         })
 
     return json.dumps({
@@ -116,7 +115,7 @@ def receive_connections(server):
         addresses.append(address)
 
         # send list of clients
-        client.sendall( generate_list_of_clients())
+        client.sendall(generate_list_of_clients())
 
         # for each client a thread is assigned
         thread = threading.Thread(target=handleMessages, args=(client,))

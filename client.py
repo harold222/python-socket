@@ -13,18 +13,18 @@ print(host + " and " + addr)
 username = input("Ingrese su nombre de usuario: ")
 
 
+def define_server_client():
+    host_server = socket.gethostbyname(socket.getfqdn())
+    port_server = 434343
 
-def define_server():
-    host_server = '127.0.0.1'
-    port_server = 55555
-
-    # SOCK_STREAM = protocol tcp
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     server.bind((host_server, port_server))
     server.listen()
 
-    print(f"Server running on {host_server}:{port_server}")
+    print("-------------------------------------------------------")
+    print(f"Client Server is running on {host_server}:{port_server}")
+    print("-------------------------------------------------------")
     return server
 
 
@@ -70,7 +70,7 @@ def receive_messages_server(client):
                         # for array all clients
                         for data in clients:
                             # create thread for clients
-                            bind_other_clients(data['ip'], data['port'], data['username'])
+                            bind_other_clients(data['ip'], data['username'])
 
                 except ValueError as e:
                     # show all messages from the server
@@ -96,7 +96,7 @@ client = generate_connections('192.168.1.53', 55555)
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])
 receive_thread.start()
 
-# define_server()
+server_client = define_server_client()
 
 # write_thread = threading.Thread(target=writeMessages, args=[client])
 # write_thread.start()

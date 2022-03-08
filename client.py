@@ -3,21 +3,50 @@ import socket
 import threading
 import json
 
+
+host = socket.getfqdn()
+addr = socket.gethostbyname(host)
+
+print(host + " and " + addr)
+
 # Save username
 username = input("Ingrese su nombre de usuario: ")
 
-def generateConnection():
-    # define ip and port
-    hostServer = '127.0.0.1'
-    portServer = 55555
 
-    # connection by protocol TCP
+
+def define_server():
+    # ip and port to show the server
+    host_server = '127.0.0.1'
+    port_server = 55555
+
+    # SOCK_STREAM = protocol tcp
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server.bind((host_server, port_server))
+    server.listen()
+
+    print(f"Server running on {host_server}:{port_server}")
+    return server
+
+
+def generate_connections(host, port):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((hostServer, portServer))
+    client.connect((host, port))
     return client
 
 
-def receiveMessages(client):
+def bind_other_clients(ip, port, username):
+    new_client = generate_connections(ip, port)
+
+    thread_per_client = threading.Thread(target=receive_messages_client, args=[new_client])
+    thread_per_client.start()
+
+
+def receive_messages_client(client):
+    print("s")
+
+
+def receive_messages_server(client):
     while True:
         try:
             # messages to server and decode
@@ -28,7 +57,6 @@ def receiveMessages(client):
                 # send save username to server
                 client.send(username.encode("utf-8"))
             else:
-
                 try:
                     object_json = json.loads(message)
                     clients = []
@@ -40,36 +68,35 @@ def receiveMessages(client):
                             break
 
                     if clients:
-                        print("a")
-                        # json with the all clients
-                        # generar conexion con los otros clientes con la respuesta dada
-
-                    # for key, value in clients['allclients'].items():
-                    #     print
-                    #     key, value
+                        # for array all clients
+                        for data in clients:
+                            # create thread for clients
+                            bind_other_clients(data['ip'], data['port'], data['username'])
 
                 except ValueError as e:
-                    # show all messages the server
+                    # show all messages from the server
                     print(message)
         except:
             # if exist error close connection of socket
             client.close()
             break
 
-def writeMessages(client):
-    while True:
-        try:
-            message = f"    {username}: {input('')}"
-            client.send(message.encode('utf-8'))
-        except:
-            break
+# def writeMessages(client):
+#     while True:
+#         try:
+#             message = f"    {username}: {input('')}"
+#             client.send(message.encode('utf-8'))
+#         except:
+#             break
 
 
-client = generateConnection()
+client = generate_connections('127.0.0.1', 55555)
 
 # create threads for functions
-receive_thread = threading.Thread(target=receiveMessages, args=[client])
+receive_thread = threading.Thread(target=receive_messages_server, args=[client])
 receive_thread.start()
 
-write_thread = threading.Thread(target=writeMessages, args=[client])
-write_thread.start()
+define_server()
+
+# write_thread = threading.Thread(target=writeMessages, args=[client])
+# write_thread.start()

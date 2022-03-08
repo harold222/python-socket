@@ -15,18 +15,19 @@ addresses = []
 
 
 # creation of server
-def defineServer():
+def define_server():
     # ip and port to show the server
-    hostServer = '127.0.0.1'
-    portServer = 55555
+    
+    host_server = '127.0.0.1'
+    port_server = 55555
 
     # SOCK_STREAM = protocol tcp
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    server.bind((hostServer, portServer))
+    server.bind((host_server, port_server))
     server.listen()
 
-    print(f"Server running on {hostServer}:{portServer}")
+    print(f"Server running on {host_server}:{port_server}")
     return server
 
 
@@ -36,58 +37,69 @@ def broadcast(message, _client):
         if client != _client:
             client.send(message)
 
-def generateListOfClients():
+
+def generate_list_of_clients():
     arr = []
     for index, user in enumerate(usernames):
-        data = {
+        arr.append({
             "username": user,
             "ip": addresses[index][0],
             "port": addresses[index][1]
-        }
-        # data = user, addresses[index][0], addresses[index][1]
-        arr.append(data)
-    return arr
+        })
 
-# allDataClients.insert(username, host, port)
-# print(allDataClient)
-
-def handleMessages(client):
-    while True:
-        try:
-            # max 1024bytes
-            message = client.recv(1024)
-
-            # verify if the client want to leave of the chat
-            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
-
-            if len(decoMessage) > 1:
-                # message to leave of the chat
-                if decoMessage[1] == "salir":
-                    disconnectClient(client)
-                    break
-                else:
-                    # publish messages
-                    broadcast(message, client)
-        except:
-            disconnectClient(client)
-            break
+    return json.dumps({
+        "allclients": arr
+    }, sort_keys=False, indent=2).encode("utf8")
 
 
-def disconnectClient(client):
+# def handleMessages(client):
+#     while True:
+#         try:
+#             # max 1024bytes
+#             message = client.recv(1024)
+#
+#             # verify if the client want to leave of the chat
+#             decoMessage = message.decode('utf-8').replace(" ", "").split(":")
+#
+#             if len(decoMessage) > 1:
+#                 # message to leave of the chat
+#                 if decoMessage[1] == "salir":
+#                     disconnectClient(client)
+#                     break
+#                 else:
+#                     # publish messages
+#                     broadcast(message, client)
+#         except:
+#             disconnectClient(client)
+#             break
+
+
+def disconnect_client(client):
     index = clients.index(client)
     username = usernames[index]
 
-    message = f"CHAT: {username} se ha desconectado."
-    broadcast(message.encode('utf-8'), client)
-    print(message)
+    print(f"CHAT: {username} se ha desconectado.")
 
-    # Elimino al cliente
+    # remove client
     clients.remove(client)
     usernames.remove(username)
+    addresses.remove(addresses[index])
     client.close()
 
+    # update the list of all clients
+    # broadcast(generateListOfClients())
 
-def receiveConnections(server):
+
+def test(client):
+    while True:
+        try:
+            pass
+        except:
+            disconnect_client(client)
+            break
+
+
+def receive_connections(server):
     while True:
         # accept conexions of any client
         client, address = server.accept()
@@ -103,18 +115,15 @@ def receiveConnections(server):
         usernames.append(username)
         addresses.append(address)
 
-        # show the new client of all client
-        message = f"CHAT: {username} ingreso al chat".encode("utf-8")
-        broadcast(message, client)
-
         # send list of clients
-        client.sendall(json.dumps({
-            "allclients": generateListOfClients()
-        }, sort_keys=False, indent=2).encode("utf8"))
+        client.sendall(generate_list_of_clients())
 
         # for each client a thread is assigned
-        thread = threading.Thread(target=handleMessages, args=(client,))
+        # thread = threading.Thread(target=handleMessages, args=(client,))
+        # thread.start()
+
+        thread = threading.Thread(target=test, args=(client,))
         thread.start()
 
 
-receiveConnections(defineServer())
+receive_connections(define_server())

@@ -15,7 +15,6 @@ username = input("Ingrese su nombre de usuario: ")
 
 
 def define_server():
-    # ip and port to show the server
     host_server = '127.0.0.1'
     port_server = 55555
 
@@ -78,6 +77,7 @@ def receive_messages_server(client):
                     print(message)
         except:
             # if exist error close connection of socket
+            print("aca")
             client.close()
             break
 
@@ -90,13 +90,13 @@ def receive_messages_server(client):
 #             break
 
 
-client = generate_connections('127.0.0.1', 55555)
+client = generate_connections('192.168.1.53', 55555)
 
 # create threads for functions
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])
 receive_thread.start()
 
-define_server()
+# define_server()
 
 # write_thread = threading.Thread(target=writeMessages, args=[client])
 # write_thread.start()

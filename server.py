@@ -17,8 +17,8 @@ addresses = []
 # creation of server
 def define_server():
     # ip and port to show the server
-    
-    host_server = '127.0.0.1'
+
+    host_server = socket.gethostbyname(socket.getfqdn())
     port_server = 55555
 
     # SOCK_STREAM = protocol tcp
@@ -52,26 +52,26 @@ def generate_list_of_clients():
     }, sort_keys=False, indent=2).encode("utf8")
 
 
-# def handleMessages(client):
-#     while True:
-#         try:
-#             # max 1024bytes
-#             message = client.recv(1024)
-#
-#             # verify if the client want to leave of the chat
-#             decoMessage = message.decode('utf-8').replace(" ", "").split(":")
-#
-#             if len(decoMessage) > 1:
-#                 # message to leave of the chat
-#                 if decoMessage[1] == "salir":
-#                     disconnectClient(client)
-#                     break
-#                 else:
-#                     # publish messages
-#                     broadcast(message, client)
-#         except:
-#             disconnectClient(client)
-#             break
+def handleMessages(client):
+    while True:
+        try:
+            # max 1024bytes
+            message = client.recv(1024)
+
+            # verify if the client want to leave of the chat
+            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
+
+            if len(decoMessage) > 1:
+                # message to leave of the chat
+                if decoMessage[1] == "salir":
+                    disconnect_client(client)
+                    break
+                else:
+                    # publish messages
+                    broadcast(message, client)
+        except:
+            disconnect_client(client)
+            break
 
 
 def disconnect_client(client):
@@ -116,14 +116,14 @@ def receive_connections(server):
         addresses.append(address)
 
         # send list of clients
-        client.sendall(generate_list_of_clients())
+        client.sendall( generate_list_of_clients())
 
         # for each client a thread is assigned
-        # thread = threading.Thread(target=handleMessages, args=(client,))
-        # thread.start()
-
-        thread = threading.Thread(target=test, args=(client,))
+        thread = threading.Thread(target=handleMessages, args=(client,))
         thread.start()
+
+        # thread = threading.Thread(target=test, args=(client,))
+        # thread.start()
 
 
 receive_connections(define_server())

@@ -1,48 +1,77 @@
-#  hacer conexion a la base de datos para guardar clientes
 import socket
 import threading
+import json
 
-host = '127.0.0.1'
-port = 55555
+# ---------DEFINE VARIABLES----------
 
-# AF_INET = socket tipo internet
-# SOCK_STREAM = protocolo tcp
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-server.bind((host, port))
-server.listen()
-
-print(f"Server running on {host}:{port}")
-
+# save all objects of clients
 clients = []
+
+# save username of client
 usernames = []
 
+# save ip and port of clients
+addresses = []
 
-# Enviara mensaje a todos los clientes
+
+# creation of server
+def defineServer():
+    # ip and port to show the server
+    hostServer = '127.0.0.1'
+    portServer = 55555
+
+    # SOCK_STREAM = protocol tcp
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server.bind((hostServer, portServer))
+    server.listen()
+
+    print(f"Server running on {hostServer}:{portServer}")
+    return server
+
+
+# send messages to al clients
 def broadcast(message, _client):
     for client in clients:
         if client != _client:
             client.send(message)
 
+def generateListOfClients():
+    arr = []
+    for index, user in enumerate(usernames):
+        data = {
+            "username": user,
+            "ip": addresses[index][0],
+            "port": addresses[index][1]
+        }
+        # data = user, addresses[index][0], addresses[index][1]
+        arr.append(data)
+    return arr
+
+# allDataClients.insert(username, host, port)
+# print(allDataClient)
 
 def handleMessages(client):
     while True:
         try:
-            # limite que esta funcion leera, 1024bytes
+            # max 1024bytes
             message = client.recv(1024)
 
-            # verifico si el cliente desea salir del chat
+            # verify if the client want to leave of the chat
             decoMessage = message.decode('utf-8').replace(" ", "").split(":")
 
             if len(decoMessage) > 1:
+                # message to leave of the chat
                 if decoMessage[1] == "salir":
                     disconnectClient(client)
                     break
                 else:
+                    # publish messages
                     broadcast(message, client)
         except:
             disconnectClient(client)
             break
+
 
 def disconnectClient(client):
     index = clients.index(client)
@@ -57,30 +86,35 @@ def disconnectClient(client):
     usernames.remove(username)
     client.close()
 
-def receiveConnections():
+
+def receiveConnections(server):
     while True:
-        # acepta conexiones de los clientes
-        # retorna objeto conexion cliente y ip y port de la conexion del cliente
+        # accept conexions of any client
         client, address = server.accept()
 
-        # el servidor requiere el username del cliente
+        # question the username of the client
         client.send("@username".encode("utf-8"))
 
-        # decodifico el mensaje
+        # get the username
         username = client.recv(1024).decode('utf-8')
 
+        # save data of new client
         clients.append(client)
         usernames.append(username)
+        addresses.append(address)
 
-        print(f"El usuario: {username} esta conectado con {str(address)}")
-
+        # show the new client of all client
         message = f"CHAT: {username} ingreso al chat".encode("utf-8")
         broadcast(message, client)
-        client.send('Conectado al servidor'.encode("utf8"))
 
-        # por cada cliente que se conecte se asignara un hilo para tener mensajes por separado
+        # send list of clients
+        client.sendall(json.dumps({
+            "allclients": generateListOfClients()
+        }, sort_keys=False, indent=2).encode("utf8"))
+
+        # for each client a thread is assigned
         thread = threading.Thread(target=handleMessages, args=(client,))
         thread.start()
 
 
-receiveConnections()
+receiveConnections(defineServer())

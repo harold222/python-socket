@@ -1,3 +1,8 @@
+cada que ingrese un nuevo cliente y el objeto de allclients retorne algo diferente de vacio
+se debe actualizar la parte de los hilos para enlazarse con ese nuevo cliente
+sino solo ese cliente funcionara como servidor ya que el objeto clients esta vacio
+
+
 import socket
 import threading
 import json

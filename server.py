@@ -43,6 +43,8 @@ def generate_list_of_clients(client):
                 "ip": addresses[index][0]
             })
 
+    print(arr)
+
     return json.dumps({
         "allclients": arr
     }, sort_keys=False, indent=2).encode("utf8")
@@ -82,18 +84,6 @@ def disconnect_client(client):
     addresses.remove(addresses[index])
     client.close()
 
-    # update the list of all clients
-    # broadcast(generateListOfClients())
-
-
-def detect_errors(client):
-    while True:
-        try:
-            pass
-        except:
-            disconnect_client(client)
-            break
-
 
 def receive_connections(server):
     while True:
@@ -112,14 +102,8 @@ def receive_connections(server):
         addresses.append(address)
 
         # send list of clients
-        client.sendall(generate_list_of_clients(client))
-
-        # for each client a thread is assigned
-        # thread = threading.Thread(target=handleMessages, args=(client,))
-        # thread.start()
-
-        thread = threading.Thread(target=detect_errors, args=(client,))
-        thread.start()
+        a = generate_list_of_clients(client)
+        client.sendall(a)
 
 
 receive_connections(define_server())

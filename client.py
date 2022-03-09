@@ -36,20 +36,21 @@ def broadcast(message, _client):
 def get_messages(other_client):
     while True:
         try:
-            message = client.recv(1024)
+            message = other_client.recv(1024).decode('utf-8')
 
-            # verify if the client want to leave of the chat
-            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
+            print(message)
 
-            if len(decoMessage) > 1:
-                # message to leave of the chat
-                if decoMessage[1] == "salir":
-                    disconnect_client(other_client)
-                    break
-                else:
-                    print(message)
-                    # publish messages
-                    # broadcast(message, other_client)
+            # decoMessage = decoMessage.replace(" ", "").split(":")
+
+            # if len(decoMessage) > 1:
+            #     # message to leave of the chat
+            #     if decoMessage[1] == "salir":
+            #         disconnect_client(other_client)
+            #         break
+            #     else:
+            #         print(message)
+            #         # publish messages
+            #         # broadcast(message, other_client)
         except:
             disconnect_client(other_client)
             break
@@ -65,7 +66,7 @@ def get_connections(server):
         other_client, address = server.accept()
 
         username_client = other_client.recv(1024).decode('utf-8')
-        print(f"El usuario: {username_client} esta conectado.")
+        print(f"El usuario {username_client} esta conectado.")
 
         clients_to_connect.append(other_client)
 
@@ -165,7 +166,7 @@ def receive_messages_server(client):
             break
 
 
-client = generate_connections('192.168.1.53', 55555)
+client = generate_connections('172.18.0.4', 55555)
 
 # create threads for functions
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])

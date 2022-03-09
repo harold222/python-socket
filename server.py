@@ -2,6 +2,8 @@ cada que ingrese un nuevo cliente y el objeto de allclients retorne algo diferen
 se debe actualizar la parte de los hilos para enlazarse con ese nuevo cliente
 sino solo ese cliente funcionara como servidor ya que el objeto clients esta vacio
 
+puedo manejar eso como otro mensaje del servidor tipo broadcast exceptuando el nuevo usuario
+ingresado para que los demas se conecten y funciona al trabajar con hilos
 
 import socket
 import threading

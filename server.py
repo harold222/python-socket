@@ -57,28 +57,6 @@ def generate_list_of_clients(client):
     }, sort_keys=False, indent=2).encode("utf8")
 
 
-# def handleMessages(client):
-#     while True:
-#         try:
-#             # max 1024bytes
-#             message = client.recv(1024)
-#
-#             # verify if the client want to leave of the chat
-#             decoMessage = message.decode('utf-8').replace(" ", "").split(":")
-#
-#             if len(decoMessage) > 1:
-#                 # message to leave of the chat
-#                 if decoMessage[1] == "salir":
-#                     disconnect_client(client)
-#                     break
-#                 else:
-#                     # publish messages
-#                     broadcast(message, client)
-#         except:
-#             disconnect_client(client)
-#             break
-
-
 def disconnect_client(client):
     index = clients.index(client)
     username = usernames[index]
@@ -113,9 +91,7 @@ def receive_connections(server):
         ports.append(port)
 
         # send list of clients
-        a = generate_list_of_clients(client)
-        # client.sendall(a)
-        broadcast(a)
+        broadcast(generate_list_of_clients(client))
 
 
 receive_connections(define_server())

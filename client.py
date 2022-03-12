@@ -49,7 +49,6 @@ def get_messages(other_client):
     while True:
         try:
             message = other_client.recv(1024).decode('utf-8')
-
             print(message)
 
             # decoMessage = decoMessage.replace(" ", "").split(":")
@@ -81,11 +80,6 @@ def get_connections(server):
         print(f"El usuario {username_client} esta conectado.")
 
         clients_to_connect.append(other_client)
-
-        # message = f"CHAT: {username_client} ingreso al chat".encode("utf-8")
-        # broadcast(message, other_client)
-        # other_client.send(f'Conectado al usuario {username}'.encode("utf8"))
-
         thread = threading.Thread(target=get_messages, args=(other_client,))
         thread.start()
 
@@ -131,6 +125,7 @@ def write_messages_to_client(all_clients):
         except:
             break
 
+
 def receive_messages_server(client):
     while True:
         try:
@@ -157,14 +152,14 @@ def receive_messages_server(client):
                                 if len(copy_json) > 0:
                                     for last_client_server in copy_json:
                                         # clients different of my client
-                                        if last_client_server['username'] != client_server['username'] & client_server['username'] != username:
-                                            a = 1
-                                            last_object_json.append({
-                                                "username": client_server['username'],
-                                                "ip": client_server['ip'],
-                                                "port": client_server['port'],
-                                                "isConnected": "false"
-                                            })
+                                        if client_server['username'] != username:
+                                            if last_client_server['username'] != client_server['username']:
+                                                last_object_json.append({
+                                                    "username": client_server['username'],
+                                                    "ip": client_server['ip'],
+                                                    "port": client_server['port'],
+                                                    "isConnected": "false"
+                                                })
                                 else:
                                     # is empty object json
                                     if client_server['username'] != username:
@@ -177,7 +172,6 @@ def receive_messages_server(client):
 
                     if len(last_object_json) > 0:
                         obj_client = []
-                        # copy_json = copy.copy(last_object_json)
                         for data in last_object_json:
                             if data["isConnected"] == "false":
                                 # create thread for clients
@@ -188,8 +182,8 @@ def receive_messages_server(client):
                                 obj_client.append(bind_client)
                                 data["isConnected"] = "true"
 
-                            write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
-                            write_thread.start()
+                                write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
+                                write_thread.start()
 
                         print("clients to connect: ", last_object_json)
 

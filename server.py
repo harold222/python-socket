@@ -1,12 +1,11 @@
-cada que ingrese un nuevo cliente y el objeto de allclients retorne algo diferente de vacio
-se debe actualizar la parte de los hilos para enlazarse con ese nuevo cliente
-sino solo ese cliente funcionara como servidor ya que el objeto clients esta vacio
-
-puedo manejar eso como otro mensaje del servidor tipo broadcast exceptuando el nuevo usuario
-ingresado para que los demas se conecten y funciona al trabajar con hilos
+# cada que ingrese un nuevo cliente y el objeto de allclients retorne algo diferente de vacio
+# se debe actualizar la parte de los hilos para enlazarse con ese nuevo cliente
+# sino solo ese cliente funcionara como servidor ya que el objeto clients esta vacio
+#
+# puedo manejar eso como otro mensaje del servidor tipo broadcast exceptuando el nuevo usuario
+# ingresado para que los demas se conecten y funciona al trabajar con hilos
 
 import socket
-import threading
 import json
 
 # ---------DEFINE VARIABLES----------
@@ -17,14 +16,16 @@ clients = []
 # save username of client
 usernames = []
 
-# save ip and port of clients
+# save ip of clients
 addresses = []
+
+# save port of clients
+ports = []
 
 
 # creation of server
 def define_server():
     # ip and port to show the server
-
     host_server = socket.gethostbyname(socket.getfqdn())
     port_server = 55555
 
@@ -38,17 +39,23 @@ def define_server():
     return server
 
 
+def broadcast(message, _client):
+    for client in clients:
+        client.send(message)
+
+
 def generate_list_of_clients(client):
     arr = []
     index = clients.index(client)
-    current_user = usernames[index]
+    # current_user = usernames[index]
 
     for index, user in enumerate(usernames):
-        if user != current_user:
-            arr.append({
-                "username": user,
-                "ip": addresses[index][0]
-            })
+        # if user != current_user:
+        arr.append({
+            "username": user,
+            "ip": addresses[index][0],
+            "port": ports[index]
+        })
 
     print(arr)
 
@@ -85,9 +92,10 @@ def disconnect_client(client):
 
     print(f"CHAT: {username} se ha desconectado.")
 
-    # remove client
+    # remove all data from the client
     clients.remove(client)
     usernames.remove(username)
+    ports.remove(ports[index])
     addresses.remove(addresses[index])
     client.close()
 
@@ -99,18 +107,22 @@ def receive_connections(server):
 
         # question the username of the client
         client.send("@username".encode("utf-8"))
+        username = client.recv(1024).decode("utf-8")
 
-        # get the username
-        username = client.recv(1024).decode('utf-8')
+        # port used to client server
+        client.send("@port".encode("utf-8"))
+        port = client.recv(1024).decode("utf-8")
 
         # save data of new client
         clients.append(client)
         usernames.append(username)
         addresses.append(address)
+        ports.append(port)
 
         # send list of clients
         a = generate_list_of_clients(client)
         client.sendall(a)
+        # broadcast(a)
 
 
 receive_connections(define_server())

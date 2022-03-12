@@ -1,7 +1,8 @@
-import json
+import random
 import socket
 import threading
 import json
+import copy
 
 # Save username
 username = input("Ingrese su nombre de usuario: ")
@@ -9,11 +10,22 @@ username = input("Ingrese su nombre de usuario: ")
 # save all clients to connect
 clients_to_connect = []
 
+# random port to server of my client
+random_port = random.randint(10000, 55554)
+
+# save object json with all clients
+last_object_json = []
+
+# key to identify json object
+key = "allclients"
+
+
 # ------------------------MOD SERVER-----------------------
 
 def define_server_client():
     host_server = socket.gethostbyname(socket.getfqdn())
-    port_server = 43434
+    # port_server = 43434
+    port_server = random_port
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -83,18 +95,16 @@ def get_connections(server):
 # ---------------MOD CLIENT-----------------------
 
 def generate_connections(host, port):
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
+    clientWithServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    clientWithServer.connect((host, port))
 
-    if port == 43434:
-        client.send(username.encode('utf-8'))
-    return client
+    if port != 55555:
+        clientWithServer.send(username.encode('utf-8'))
+    return clientWithServer
 
 
-def bind_other_clients(ip, user_client):
-    a = user_client
-
-    new_client = generate_connections(ip, 43434)
+def bind_other_clients(ip, port):
+    new_client = generate_connections(ip, port)
 
     thread_per_client = threading.Thread(target=receive_messages_client, args=[new_client])
     thread_per_client.start()
@@ -131,26 +141,39 @@ def receive_messages_server(client):
             if message == "@username":
                 # send save username to server
                 client.send(username.encode("utf-8"))
+            elif message == "@port":
+                # send random port to server
+                client.send(f"{random_port}".encode("utf-8"))
             else:
                 try:
                     object_json = json.loads(message)
-                    clients = []
-                    key = "allclients"
 
                     for val in object_json.keys():
                         if val == key:
-                            clients = object_json[key]
-                            break
+                            # shallow copy
+                            copy_json = copy.copy(last_object_json)
+                            # filter current ip and port of this server
+                            for client_server in object_json[key]:
+                                if len(copy_json) > 0:
+                                    for last_client_server in copy_json:
+                                        # clients different of my client
+                                        if last_client_server['username'] != client_server['username'] & client_server['username'] != username:
+                                            last_object_json.append(client_server)
+                                else:
+                                    # is empty object json
+                                    if client_server['username'] != username:
+                                        last_object_json.append(client_server)
 
-                    if clients:
-                        # for array all clients
+                    print("clients to connect: ", last_object_json)
+
+                    if len(last_object_json) > 0:
                         obj_client = []
-                        for data in clients:
+                        for data in last_object_json:
                             # create thread for clients
                             ip_client = data['ip']
-                            user_client = data['username']
+                            port_client = int(data['port'])
 
-                            bind_client = bind_other_clients(ip_client, user_client)
+                            bind_client = bind_other_clients(ip_client, port_client)
                             obj_client.append(bind_client)
 
                         write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
@@ -165,8 +188,10 @@ def receive_messages_server(client):
             client.close()
             break
 
+hostServer = '192.168.1.53'
+# hostServer = '172.18.0.2'
 
-client = generate_connections('172.18.0.4', 55555)
+client = generate_connections(hostServer, 55555)
 
 # create threads for functions
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])

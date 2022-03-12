@@ -158,26 +158,40 @@ def receive_messages_server(client):
                                     for last_client_server in copy_json:
                                         # clients different of my client
                                         if last_client_server['username'] != client_server['username'] & client_server['username'] != username:
-                                            last_object_json.append(client_server)
+                                            a = 1
+                                            last_object_json.append({
+                                                "username": client_server['username'],
+                                                "ip": client_server['ip'],
+                                                "port": client_server['port'],
+                                                "isConnected": "false"
+                                            })
                                 else:
                                     # is empty object json
                                     if client_server['username'] != username:
-                                        last_object_json.append(client_server)
-
-                    print("clients to connect: ", last_object_json)
+                                        last_object_json.append({
+                                            "username": client_server['username'],
+                                            "ip": client_server['ip'],
+                                            "port": client_server['port'],
+                                            "isConnected": "false"
+                                        })
 
                     if len(last_object_json) > 0:
                         obj_client = []
+                        # copy_json = copy.copy(last_object_json)
                         for data in last_object_json:
-                            # create thread for clients
-                            ip_client = data['ip']
-                            port_client = int(data['port'])
+                            if data["isConnected"] == "false":
+                                # create thread for clients
+                                ip_client = data['ip']
+                                port_client = int(data['port'])
 
-                            bind_client = bind_other_clients(ip_client, port_client)
-                            obj_client.append(bind_client)
+                                bind_client = bind_other_clients(ip_client, port_client)
+                                obj_client.append(bind_client)
+                                data["isConnected"] = "true"
 
-                        write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
-                        write_thread.start()
+                            write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
+                            write_thread.start()
+
+                        print("clients to connect: ", last_object_json)
 
                 except ValueError as e:
                     # show all messages from the server

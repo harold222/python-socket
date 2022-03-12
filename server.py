@@ -1,10 +1,3 @@
-# cada que ingrese un nuevo cliente y el objeto de allclients retorne algo diferente de vacio
-# se debe actualizar la parte de los hilos para enlazarse con ese nuevo cliente
-# sino solo ese cliente funcionara como servidor ya que el objeto clients esta vacio
-#
-# puedo manejar eso como otro mensaje del servidor tipo broadcast exceptuando el nuevo usuario
-# ingresado para que los demas se conecten y funciona al trabajar con hilos
-
 import socket
 import json
 
@@ -39,7 +32,7 @@ def define_server():
     return server
 
 
-def broadcast(message, _client):
+def broadcast(message):
     for client in clients:
         client.send(message)
 
@@ -121,8 +114,8 @@ def receive_connections(server):
 
         # send list of clients
         a = generate_list_of_clients(client)
-        client.sendall(a)
-        # broadcast(a)
+        # client.sendall(a)
+        broadcast(a)
 
 
 receive_connections(define_server())

@@ -121,7 +121,7 @@ def write_messages_to_client(all_clients):
         try:
             message = f"    {username}: {input('')}"
             for value in all_clients:
-                value.send(message.encode('utf-8'))
+                value.sendAll(message.encode('utf-8'))
         except:
             break
 
@@ -201,9 +201,13 @@ hostServer = '192.168.1.53'
 
 client = generate_connections(hostServer, 55555)
 
-# create threads for functions
+# create threads for receive messages to clients
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])
 receive_thread.start()
+
+# create thread for write messages to servers
+write_thread = threading.Thread(target=write_messages_to_client, args=[clients_to_connect])
+write_thread.start()
 
 # create server
 server_client = define_server_client()

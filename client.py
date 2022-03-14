@@ -121,7 +121,7 @@ def write_messages_to_client(all_clients):
         try:
             message = f"    {username}: {input('')}"
             for value in all_clients:
-                value.sendAll(message.encode('utf-8'))
+                value.send(message.encode('utf-8'))
         except:
             break
 

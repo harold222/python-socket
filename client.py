@@ -4,14 +4,35 @@ import threading
 import json
 import copy
 
+
+def generate_ports_to_tcp_udp(specific_port = 0):
+    if specific_port == 0:
+        return random.randint(10000, 55554)
+    else:
+        generate_random = 0
+        found_port = False
+        # generate differents ports for the connections
+        while not found_port:
+            generate_random = generate_ports_to_tcp_udp()
+            if generate_random != specific_port:
+                found_port = True
+        return generate_random
+
+
 # Save username
 username = input("Ingrese su nombre de usuario: ")
 
-# save all clients to connect
-clients_to_connect = []
+# save all clients tcp to connect
+clients_to_connect_tcp = []
 
-# random port to server of my client
-random_port = random.randint(10000, 55554)
+# save all clients udp to connect
+clients_to_connect_udp = []
+
+# random port to server of my client tcp
+random_port_tcp = generate_ports_to_tcp_udp()
+
+# random port to server of my client udp
+random_port_udp = generate_ports_to_tcp_udp(random_port_tcp)
 
 # save object json with all clients
 last_object_json = []
@@ -19,72 +40,79 @@ last_object_json = []
 # key to identify json object
 key = "allclients"
 
+# get ip of my server by name pc
+host_server = socket.gethostbyname(socket.getfqdn())
+
 
 # ------------------------MOD SERVER-----------------------
 
-def define_server_client():
-    host_server = socket.gethostbyname(socket.getfqdn())
-    # port_server = 43434
-    port_server = random_port
-
+def define_server_client_tcp():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    server.bind((host_server, port_server))
+    server.bind((host_server, random_port_tcp))
     server.listen()
 
     print("-------------------------------------------------------")
-    print(f"Client Server is running on {host_server}:{port_server}")
+    print(f"Client Server TCP is running on {host_server}:{random_port_tcp}")
     print("-------------------------------------------------------")
     return server
 
 
+# def define_server_client_upd():
+#     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#     server.bind((host_server, random_port_udp))
+#
+#     # don't need "listen" because UDP generate a socket without connection
+#     print("-------------------------------------------------------")
+#     print(f"Client Server UDP is running on {host_server}:{random_port_udp}")
+#     print("-------------------------------------------------------")
+#
+#     return server
+
+
 # send messages to al clients
 def broadcast(message, _client):
-    for client in clients_to_connect:
+    for client in clients_to_connect_tcp:
         if client != _client:
             client.send(message)
 
 
-def get_messages(other_client):
+def get_messages_tcp(other_client):
     while True:
         try:
-            message = other_client.recv(1024).decode('utf-8')
-            print(message)
-
-            # decoMessage = decoMessage.replace(" ", "").split(":")
-
-            # if len(decoMessage) > 1:
-            #     # message to leave of the chat
-            #     if decoMessage[1] == "salir":
-            #         disconnect_client(other_client)
-            #         break
-            #     else:
-            #         print(message)
-            #         # publish messages
-            #         # broadcast(message, other_client)
+            print(other_client.recv(1024).decode('utf-8'))
         except:
             disconnect_client(other_client)
             break
 
 
 def disconnect_client(other_client):
-    clients_to_connect.remove(other_client)
+    clients_to_connect_tcp.remove(other_client)
     other_client.close()
 
 
-def get_connections(server):
+def get_connections_tcp(server_tcp):
     while True:
-        other_client, address = server.accept()
+        other_client, address = server_tcp.accept()
 
         username_client = other_client.recv(1024).decode('utf-8')
-        print(f"El usuario {username_client} esta conectado.")
+        print(f"El usuario {username_client} esta conectado via TCP.")
 
-        clients_to_connect.append(other_client)
-        thread = threading.Thread(target=get_messages, args=(other_client,))
+        clients_to_connect_tcp.append(other_client)
+        thread = threading.Thread(target=get_messages_tcp, args=(other_client,))
         thread.start()
 
 
+# def get_connections_udp(server_udp):
+#     while True:
+#         try:
+#             message, address = server_udp.recvfrom(2048)
+#             clients_to_connect_udp.append(address)
+#             print(message.decode("utf-8"))
+#         except:
+#             print("Error: any client in UDP")
+
 # ----------------------FIN MOD SERVER-----------------------
+
 
 # ---------------MOD CLIENT-----------------------
 
@@ -120,6 +148,11 @@ def write_messages_to_client(all_clients):
     while True:
         try:
             message = f"    {username}: {input('')}"
+            # inputMessage = message.split(":")
+            #
+            # if "audio:" in inputMessage[1]:
+            #     print("Enviando audio")
+            # else:
             for value in all_clients:
                 value.sendAll(message.encode('utf-8'))
         except:
@@ -138,7 +171,7 @@ def receive_messages_server(client):
                 client.send(username.encode("utf-8"))
             elif message == "@port":
                 # send random port to server
-                client.send(f"{random_port}".encode("utf-8"))
+                client.send(f"{random_port_tcp}".encode("utf-8"))
             else:
                 try:
                     object_json = json.loads(message)
@@ -196,19 +229,22 @@ def receive_messages_server(client):
             client.close()
             break
 
-hostServer = '192.168.1.53'
-# hostServer = '172.18.0.2'
 
-client = generate_connections(hostServer, 55555)
+client = generate_connections('192.168.1.53', 55555)
 
 # create threads for receive messages to clients
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])
 receive_thread.start()
 
 # create thread for write messages to servers
-write_thread = threading.Thread(target=write_messages_to_client, args=[clients_to_connect])
+write_thread = threading.Thread(target=write_messages_to_client, args=[clients_to_connect_tcp])
 write_thread.start()
 
-# create server
-server_client = define_server_client()
-get_connections(server_client)
+# create thread for server tcp and receive connections
+get_connections_tcp(define_server_client_tcp())
+# thread_server_tcp = threading.Thread(target=, args=[])
+# thread_server_tcp.start()
+
+# create server udp and receive connections
+# thread_server_udp = threading.Thread(target=get_connections_udp(define_server_client_upd()), args=[])
+# thread_server_udp.start()

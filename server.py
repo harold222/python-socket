@@ -37,13 +37,9 @@ def broadcast(message):
         client.send(message)
 
 
-def generate_list_of_clients(client):
+def generate_list_of_clients():
     arr = []
-    index = clients.index(client)
-    # current_user = usernames[index]
-
     for index, user in enumerate(usernames):
-        # if user != current_user:
         arr.append({
             "username": user,
             "ip": addresses[index][0],
@@ -91,7 +87,7 @@ def receive_connections(server):
         ports.append(port)
 
         # send list of clients
-        broadcast(generate_list_of_clients(client))
+        broadcast(generate_list_of_clients())
 
 
 receive_connections(define_server())

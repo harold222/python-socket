@@ -12,9 +12,11 @@ usernames = []
 # save ip of clients
 addresses = []
 
-# save port of clients
-ports = []
+# save port tpc of clients
+ports_tcp = []
 
+# save port udp of clients
+ports_udp = []
 
 # creation of server
 def define_server():
@@ -43,7 +45,8 @@ def generate_list_of_clients():
         arr.append({
             "username": user,
             "ip": addresses[index][0],
-            "port": ports[index]
+            "port_tcp": ports_tcp[index],
+            "port_udp": ports_udp[index]
         })
 
     print(arr)
@@ -62,7 +65,8 @@ def disconnect_client(client):
     # remove all data from the client
     clients.remove(client)
     usernames.remove(username)
-    ports.remove(ports[index])
+    ports_tcp.remove(ports_tcp[index])
+    ports_udp.remove(ports_udp[index])
     addresses.remove(addresses[index])
     client.close()
 
@@ -78,13 +82,14 @@ def receive_connections(server):
 
         # port used to client server
         client.send("@port".encode("utf-8"))
-        port = client.recv(1024).decode("utf-8")
+        port = client.recv(1024).decode("utf-8").split(":")
 
         # save data of new client
         clients.append(client)
         usernames.append(username)
         addresses.append(address)
-        ports.append(port)
+        ports_tcp.append(port[0])
+        ports_udp.append(port[1])
 
         # send list of clients
         broadcast(generate_list_of_clients())

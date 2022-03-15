@@ -25,9 +25,6 @@ username = input("Ingrese su nombre de usuario: ")
 # save all clients tcp to connect
 clients_to_connect_tcp = []
 
-# save all clients udp to connect
-clients_to_connect_udp = []
-
 # random port to server of my client tcp
 random_port_tcp = generate_ports_to_tcp_udp()
 
@@ -93,7 +90,7 @@ def get_connections_tcp(server_tcp):
         other_client, address = server_tcp.accept()
 
         username_client = other_client.recv(1024).decode('utf-8')
-        print(f"El usuario {username_client} esta conectado via TCP.")
+        print(f"El usuario {username_client} esta conectado.")
 
         clients_to_connect_tcp.append(other_client)
         thread = threading.Thread(target=get_messages_tcp, args=(other_client,))
@@ -104,8 +101,7 @@ def get_connections_udp(server_udp):
     while True:
         try:
             message, address = server_udp.recvfrom(2048)
-            clients_to_connect_udp.append(address)
-            print("Por udp: ", message.decode("utf-8"))
+            print("UDP: ", message.decode("utf-8"))
         except:
             print("Error: any client in UDP")
 
@@ -138,32 +134,12 @@ def bind_other_clients_tcp(ip, port):
     return new_client
 
 
-def bind_other_clients_udp(ip, port):
-    new_client_udp = generate_connections_udp()
-
-    thread_per_client = threading.Thread(target=receive_messages_client_udp, args=[new_client_udp])
-    thread_per_client.start()
-
-    return new_client_udp
-
-
 def receive_messages_client_tcp(new_client_tcp):
     while True:
         try:
-            message = new_client_tcp.recv(1024).decode('utf-8')
-            print(message)
+            print(new_client_tcp.recv(1024).decode('utf-8'))
         except:
             new_client_tcp.close()
-            break
-
-
-def receive_messages_client_udp(new_client_udp):
-    while True:
-        try:
-            message = new_client_udp.recvfrom(2048).decode("utf-8")
-            print("Por UDP:", message)
-        except:
-            new_client_udp.close()
             break
 
 
@@ -177,7 +153,7 @@ def write_messages_to_client(all_clients):
                 client_socket = generate_connections_udp()
                 for data in last_object_json:
                     if data["isConnected"] == "true":
-                        msg = client_socket.sendto(message.encode('utf-8'), (data["ip"], int(data["port_udp"])))
+                        client_socket.sendto(message.encode('utf-8'), (data["ip"], int(data["port_udp"])))
             else:
                 for value in all_clients:
                     value.send(message.encode('utf-8'))

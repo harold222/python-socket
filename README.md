@@ -3,4 +3,4 @@
 ![N|Solid](1.png)
 
 - ``` file server ``` = is an indexed server that stores clients in an array.
-- ``` client file ``` = posee funciones de cliente/servidor de tcp y udp, genera puertos aleatorios para cada uno, cada cliente posee un nombre de usuario y se genera la conexion entre clientes, para enviar archivos se usa protocolo UDP y se envia escribiendo en la terminal ```audio:nombre.ext```.
+- ``` client file ``` =has tcp and udp client/server functions, generates random ports for each one, each client has a username and the connection between clients is generated, to send files the UDP protocol is used and is sent by writing in the terminal ``` audio:name.ext ```.

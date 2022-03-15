@@ -55,6 +55,8 @@ def define_server_client_tcp():
 
 def define_server_client_upd():
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 8192)
+
     server.bind((host_server, random_port_udp))
 
     # don't need "listen" because UDP generate a socket without connection
@@ -100,8 +102,15 @@ def get_connections_tcp(server_tcp):
 def get_connections_udp(server_udp):
     while True:
         try:
-            message, address = server_udp.recvfrom(2048)
-            print("UDP: ", message.decode("utf-8"))
+            message, address = server_udp.recvfrom(8192)
+            print("Received File:", message.strip())
+            f = open(message.strip(), 'wb')
+
+            while (message):
+                f.write(message)
+                server_udp.settimeout(2)
+                data, addr = server_udp.recvfrom(8192)
+            # print("UDP: ", message.decode("utf-8"))
         except:
             print("Error: any client in UDP")
 
@@ -151,9 +160,17 @@ def write_messages_to_client(all_clients):
 
             if "audio" in input_message[1]:
                 client_socket = generate_connections_udp()
+
+                f = open(f"audios/{input_message[2]}", "rb")
+                file_data = f.read(8192)
+
                 for data in last_object_json:
                     if data["isConnected"] == "true":
-                        client_socket.sendto(message.encode('utf-8'), (data["ip"], int(data["port_udp"])))
+                        while file_data:
+                            client_socket.sendto(file_data, (data["ip"], int(data["port_udp"])))
+                            file_data = f.read(8192)
+                f.close()
+
             else:
                 for value in all_clients:
                     value.send(message.encode('utf-8'))

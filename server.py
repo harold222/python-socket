@@ -18,8 +18,9 @@ ports_tcp = []
 # save port udp of clients
 ports_udp = []
 
+
 # creation of server
-def define_server():
+def create_server():
     # ip and port to show the server
     host_server = socket.gethostbyname(socket.getfqdn())
     port_server = 55555
@@ -32,11 +33,6 @@ def define_server():
 
     print(f"Server running on {host_server}:{port_server}")
     return server
-
-
-def broadcast(message):
-    for client in clients:
-        client.send(message)
 
 
 def generate_list_of_clients():
@@ -54,21 +50,6 @@ def generate_list_of_clients():
     return json.dumps({
         "allclients": arr
     }, sort_keys=False, indent=2).encode("utf8")
-
-
-def disconnect_client(client):
-    index = clients.index(client)
-    username = usernames[index]
-
-    print(f"CHAT: {username} se ha desconectado.")
-
-    # remove all data from the client
-    clients.remove(client)
-    usernames.remove(username)
-    ports_tcp.remove(ports_tcp[index])
-    ports_udp.remove(ports_udp[index])
-    addresses.remove(addresses[index])
-    client.close()
 
 
 def receive_connections(server):
@@ -92,7 +73,9 @@ def receive_connections(server):
         ports_udp.append(port[1])
 
         # send list of clients
-        broadcast(generate_list_of_clients())
+        json_list = generate_list_of_clients()
+        for client in clients:
+            client.send(json_list)
 
 
-receive_connections(define_server())
+receive_connections(create_server())

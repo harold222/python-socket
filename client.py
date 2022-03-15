@@ -105,7 +105,7 @@ def get_connections_udp(server_udp):
         try:
             message, address = server_udp.recvfrom(2048)
             clients_to_connect_udp.append(address)
-            print(message.decode("utf-8"))
+            print("Por udp: ", message.decode("utf-8"))
         except:
             print("Error: any client in UDP")
 
@@ -124,7 +124,7 @@ def generate_connections_tcp(host, port):
 
 
 def generate_connections_udp():
-    client_with_server = socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_with_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # don't need "connect" in UDP
     return client_with_server
 
@@ -173,13 +173,11 @@ def write_messages_to_client(all_clients):
             message = f"    {username}: {input('')}"
             input_message = message.split(":")
 
-            if "audio:" in input_message[1]:
-                print("Enviando audio - manejar por udp")
-                for value in all_clients:
-                    clientSocket = generate_connections_udp()
-                    # obtener la ip y enviar puerto udp
-                    # clientSocket.sendto(message, (serverName, serverPort))
-                    print(value)
+            if "audio" in input_message[1]:
+                client_socket = generate_connections_udp()
+                for data in last_object_json:
+                    if data["isConnected"] == "true":
+                        msg = client_socket.sendto(message.encode('utf-8'), (data["ip"], int(data["port_udp"])))
             else:
                 for value in all_clients:
                     value.send(message.encode('utf-8'))
@@ -258,7 +256,7 @@ def receive_messages_server(client):
             break
 
 
-client = generate_connections_tcp('192.168.1.53', 55555)
+client = generate_connections_tcp('192.168.128.1', 55555)
 
 # create threads for receive messages to clients
 receive_thread = threading.Thread(target=receive_messages_server, args=[client])

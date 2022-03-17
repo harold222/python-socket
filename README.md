@@ -1,4 +1,4 @@
-# Example Sockets with python
+# Sockets TCP UDP with python 
 
 ![N|Solid](1.png)
 

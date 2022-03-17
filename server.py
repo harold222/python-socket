@@ -2,7 +2,7 @@ import socket
 import json
 
 
-class GenerateServer:
+class IndexedServer:
     def __init__(self, port):
         self.port = port
         self.host = socket.gethostbyname(socket.getfqdn())
@@ -66,5 +66,5 @@ class GenerateServer:
                     client.close()
 
 
-server = GenerateServer(55555)
+server = IndexedServer(55555)
 server.create_server()

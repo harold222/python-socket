@@ -1,86 +1,81 @@
-#  hacer conexion a la base de datos para guardar clientes
 import socket
-import threading
+import json
 
-host = '127.0.0.1'
-port = 55555
+# ---------DEFINE VARIABLES----------
 
-# AF_INET = socket tipo internet
-# SOCK_STREAM = protocolo tcp
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-server.bind((host, port))
-server.listen()
-
-print(f"Server running on {host}:{port}")
-
+# save all objects of clients
 clients = []
+
+# save username of client
 usernames = []
 
+# save ip of clients
+addresses = []
 
-# Enviara mensaje a todos los clientes
-def broadcast(message, _client):
-    for client in clients:
-        if client != _client:
-            client.send(message)
+# save port tpc of clients
+ports_tcp = []
+
+# save port udp of clients
+ports_udp = []
 
 
-def handleMessages(client):
+# creation of server
+def create_server():
+    # ip and port to show the server
+    host_server = socket.gethostbyname(socket.getfqdn())
+    port_server = 55555
+
+    # SOCK_STREAM = protocol tcp
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    server.bind((host_server, port_server))
+    server.listen()
+
+    print(f"Server running on {host_server}:{port_server}")
+    return server
+
+
+def generate_list_of_clients():
+    arr = []
+    for index, user in enumerate(usernames):
+        arr.append({
+            "username": user,
+            "ip": addresses[index][0],
+            "port_tcp": ports_tcp[index],
+            "port_udp": ports_udp[index]
+        })
+
+    print(arr)
+
+    return json.dumps({
+        "allclients": arr
+    }, sort_keys=False, indent=2).encode("utf8")
+
+
+def receive_connections(server):
     while True:
-        try:
-            # limite que esta funcion leera, 1024bytes
-            message = client.recv(1024)
-
-            # verifico si el cliente desea salir del chat
-            decoMessage = message.decode('utf-8').replace(" ", "").split(":")
-
-            if len(decoMessage) > 1:
-                if decoMessage[1] == "salir":
-                    disconnectClient(client)
-                    break
-                else:
-                    broadcast(message, client)
-        except:
-            disconnectClient(client)
-            break
-
-def disconnectClient(client):
-    index = clients.index(client)
-    username = usernames[index]
-
-    message = f"CHAT: {username} se ha desconectado."
-    broadcast(message.encode('utf-8'), client)
-    print(message)
-
-    # Elimino al cliente
-    clients.remove(client)
-    usernames.remove(username)
-    client.close()
-
-def receiveConnections():
-    while True:
-        # acepta conexiones de los clientes
-        # retorna objeto conexion cliente y ip y port de la conexion del cliente
+        # accept conexions of any client
         client, address = server.accept()
 
-        # el servidor requiere el username del cliente
+        # question the username of the client
         client.send("@username".encode("utf-8"))
+        username = client.recv(1024).decode("utf-8")
 
-        # decodifico el mensaje
-        username = client.recv(1024).decode('utf-8')
+        # port used to client server
+        client.send("@port".encode("utf-8"))
+        port = client.recv(1024).decode("utf-8").split(":")
 
+        # save data of new client
         clients.append(client)
         usernames.append(username)
+        addresses.append(address)
+        ports_tcp.append(port[0])
+        ports_udp.append(port[1])
 
-        print(f"El usuario: {username} esta conectado con {str(address)}")
-
-        message = f"CHAT: {username} ingreso al chat".encode("utf-8")
-        broadcast(message, client)
-        client.send('Conectado al servidor'.encode("utf8"))
-
-        # por cada cliente que se conecte se asignara un hilo para tener mensajes por separado
-        thread = threading.Thread(target=handleMessages, args=(client,))
-        thread.start()
+        # send list of clients
+        json_list = generate_list_of_clients()
+        for client in clients:
+            client.send(json_list)
 
 
-receiveConnections()
+receive_connections(create_server())

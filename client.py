@@ -189,78 +189,73 @@ def write_messages_to_client(all_clients):
 def receive_messages_server(client):
     while True:
         try:
-            # messages to server and decode
-            message = client.recv(1024).decode('utf-8')
+            message = client.recv(1024)
 
-            # server ask the username to client
-            if message == "@username":
-                # send save username to server
-                client.send(username.encode("utf-8"))
-            elif message == "@port":
-                # send random port to server
-                client.send(f"{random_port_tcp}:{random_port_udp}".encode("utf-8"))
-            else:
-                try:
-                    object_json = json.loads(message)
+            if message:
+                message = message.decode('utf-8')
+                # server ask the username to client
+                if message == "@data":
+                    # send data to indexed server
+                    client.send(f"{username}:{random_port_tcp}:{random_port_udp}".encode("utf-8"))
+                else:
+                    try:
+                        object_json = json.loads(message)
 
-                    for val in object_json.keys():
-                        if val == key:
-                            # shallow copy
-                            copy_json = copy.copy(last_object_json)
-                            # filter current ip and port of this server
-                            for client_server in object_json[key]:
-                                if len(copy_json) > 0:
-                                    for last_client_server in copy_json:
-                                        # clients different of my client
+                        for val in object_json.keys():
+                            if val == key:
+                                # shallow copy
+                                copy_json = copy.copy(last_object_json)
+                                # filter current ip and port of this server
+                                for client_server in object_json[key]:
+                                    if len(copy_json) > 0:
+                                        for last_client_server in copy_json:
+                                            # clients different of my client
+                                            if client_server['username'] != username:
+                                                if last_client_server['username'] != client_server['username']:
+                                                    last_object_json.append({
+                                                        "username": client_server['username'],
+                                                        "ip": client_server['ip'],
+                                                        "port_tcp": client_server['port_tcp'],
+                                                        "port_udp": client_server['port_udp'],
+                                                        "isConnected": "false"
+                                                    })
+                                    else:
+                                        # is empty array
                                         if client_server['username'] != username:
-                                            if last_client_server['username'] != client_server['username']:
-                                                last_object_json.append({
-                                                    "username": client_server['username'],
-                                                    "ip": client_server['ip'],
-                                                    "port_tcp": client_server['port_tcp'],
-                                                    "port_udp": client_server['port_udp'],
-                                                    "isConnected": "false"
-                                                })
-                                else:
-                                    # is empty array
-                                    if client_server['username'] != username:
-                                        last_object_json.append({
-                                            "username": client_server['username'],
-                                            "ip": client_server['ip'],
-                                            "port_tcp": client_server['port_tcp'],
-                                            "port_udp": client_server['port_udp'],
-                                            "isConnected": "false"
-                                        })
+                                            last_object_json.append({
+                                                "username": client_server['username'],
+                                                "ip": client_server['ip'],
+                                                "port_tcp": client_server['port_tcp'],
+                                                "port_udp": client_server['port_udp'],
+                                                "isConnected": "false"
+                                            })
 
-                    if len(last_object_json) > 0:
-                        obj_client = []
-                        for data in last_object_json:
-                            if data["isConnected"] == "false":
-                                print("client to connect: ", data)
-                                # create thread for clients
-                                ip_client = data['ip']
-                                port_client = int(data['port_tcp'])
+                        if len(last_object_json) > 0:
+                            obj_client = []
+                            for data in last_object_json:
+                                if data["isConnected"] == "false":
+                                    # create thread for clients
+                                    ip_client = data['ip']
+                                    port_client = int(data['port_tcp'])
 
-                                bind_client = bind_other_clients_tcp(ip_client, port_client)
-                                obj_client.append(bind_client)
-                                data["isConnected"] = "true"
+                                    bind_client = bind_other_clients_tcp(ip_client, port_client)
+                                    obj_client.append(bind_client)
+                                    data["isConnected"] = "true"
 
-                                write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
-                                write_thread.start()
-                except ValueError as e:
-                    # show all messages from the server
-                    print(message)
+                                    write_thread = threading.Thread(target=write_messages_to_client, args=[obj_client])
+                                    write_thread.start()
+                    except ValueError as e:
+                        # show all messages from the server
+                        print(message)
         except:
-            # if exist error close connection of socket
-            print("aca")
+            # if exist error close connection socket of indexed server
+            print("Indexed Server is shutdown")
             client.close()
             break
 
 
-client = generate_connections_tcp('192.168.128.1', 55555)
-
-# create threads for receive messages to clients
-receive_thread = threading.Thread(target=receive_messages_server, args=[client])
+connection_indexed_server = generate_connections_tcp('192.168.1.53', 55555)
+receive_thread = threading.Thread(target=receive_messages_server, args=[connection_indexed_server])
 receive_thread.start()
 
 # create thread for write messages to servers

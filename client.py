@@ -89,12 +89,17 @@ def get_connections_tcp(server_tcp):
     while True:
         other_client, address = server_tcp.accept()
 
-        username_client = other_client.recv(1024).decode('utf-8')
-        print(f"El usuario {username_client} esta conectado.")
+        try:
+            username_client = other_client.recv(1024).decode('utf-8')
+            print(f"El usuario {username_client} esta conectado.")
 
-        clients_to_connect_tcp.append(other_client)
-        thread = threading.Thread(target=get_messages_tcp, args=(other_client,))
-        thread.start()
+            clients_to_connect_tcp.append(other_client)
+            thread = threading.Thread(target=get_messages_tcp, args=(other_client,))
+            thread.start()
+        except:
+            print("Some client is offline")
+            other_client.close()
+        break
 
 
 def get_connections_udp(server_udp):
@@ -254,7 +259,7 @@ def receive_messages_server(client):
             break
 
 
-connection_indexed_server = generate_connections_tcp('192.168.1.53', 55555)
+connection_indexed_server = generate_connections_tcp('172.29.144.1', 55555)
 receive_thread = threading.Thread(target=receive_messages_server, args=[connection_indexed_server])
 receive_thread.start()
 
